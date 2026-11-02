@@ -1,0 +1,3 @@
+window.SUPABASE_URL = "https://ajorwmyhcqgwjngqujmy.supabase.co";
+window.SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqb3J3bXloY3Fnd2puZ3F1am15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNzkzMDIsImV4cCI6MjEwODg1NTMwMn0.ycnknrFo8MjeW6pKEVCP89Pz9Ube94BerhBC2rKJLMw";
+window.APPMIA_DOMINIOS = [];

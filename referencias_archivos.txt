@@ -1,0 +1,80 @@
+==================================================================
+GUÍA DE ARCHIVOS PARA MI MUNDO DE CALMA (APPMIA)
+==================================================================
+Coloca tus archivos con EXACTAMENTE estos nombres, en estas carpetas.
+Si falta una imagen, la app muestra un emoji. Si falta un audio, no suena nada.
+
+Appmia/
+├── index.html, styles.css, script.js, sw.js, supabase-config.js
+├── supabase_setup.sql          (instalación completa desde cero)
+├── supabase_actualizacion.sql  (SOLO los cambios de esta versión)
+└── assets/
+    ├── img/     (imágenes)
+    └── audio/   (audios, SIEMPRE en .mp3)
+
+------------------------------------------------------------------
+1. IMÁGENES  ->  assets/img/
+------------------------------------------------------------------
+FORMATO: las imágenes van en .webp (pesan 3 veces menos y cargan al
+instante). Si reemplazas una por .png o .jpg, BORRA el .webp con el
+mismo nombre, porque la app usa primero el .webp.
+
+AMIGOS (6). Pueden ser GIF animados: la app busca primero .gif y
+si no hay, usa .webp / .png / .jpg:
+  avatar1.gif  Dinosaurio      avatar4.gif  Monito
+  avatar2.gif  Personaje       avatar5.gif  Gatito
+  avatar3.gif  Niño            avatar6.gif  Estrella
+  Recomendado: cuadrados (512x512) con fondo transparente.
+
+RESPIRACIÓN (3 GIF, uno por fase; se ven dentro del círculo):
+  resp_inhalar.gif    INHALA
+  resp_sostener.gif   MANTÉN
+  resp_exhalar.gif    EXHALA
+  Recomendado: cuadrados, 400x400, de 3 a 5 segundos.
+  Mientras no estén, en cada fase se ve el amigo elegido.
+
+ROMPECABEZAS (9): rompecabezas1..9 y su miniatura rompecabezas1_m..9_m
+  Fila 1: 1, 2, 3  ->  2x2 (4 piezas)
+  Fila 2: 4, 5, 6  ->  2x3 (6 piezas)
+  Fila 3: 7, 8, 9  ->  3x3 (9 piezas)
+
+JUEGOS: globo.webp, fondo_agua.webp
+
+------------------------------------------------------------------
+2. AUDIOS  ->  assets/audio/   (todos .mp3)
+------------------------------------------------------------------
+  voz_nombre.mp3       "Ingresa tu nombre" (pantalla del nombre)
+  voz_gracias.mp3      "Gracias por elegirme" (al tocar "Seleccionar este personaje")
+  voz_muybien.mp3      felicitación (al terminar de respirar y al tocar "¡Lo hice!")
+  voz_listo, voz_inhala, voz_mantener, voz_exhala   (respiración)
+  voz_feliz, voz_tranquilo, voz_preocupado, voz_triste, voz_enojado, voz_nervioso
+  Efectos sfx_*.mp3: igual que antes.
+
+------------------------------------------------------------------
+3. CÓMO FUNCIONA ESTA VERSIÓN
+------------------------------------------------------------------
+- La docente crea su cuenta o entra (una vez por tablet). Ya NO hay
+  aprobación de la directora: al crear la cuenta se entra directo.
+- Después del acceso aparece "Ingresa tu nombre" con su audio, el campo
+  de texto y los 6 amigos. Al tocar "Seleccionar este personaje" suena
+  "Gracias por elegirme" y se abre el Inicio con "¡Hola, [nombre]!".
+- No se guarda ningún registro de alumnos en la nube. Cada tablet solo
+  recuerda al niño que la está usando (nombre, amigo y estrellas).
+- Botón "Cambiar nombre" en el Inicio: corrige el nombre o el amigo y
+  conserva las estrellas.
+- Cuando otro niño usa la tablet: Docente > "Otro niño". Empieza desde
+  cero con "Ingresa tu nombre".
+- Directora: entra como cualquier docente. En su zona ve la lista
+  "Cuentas de la escuela" con cada docente, y
+  puede darle una contraseña nueva. Para designarla, en Supabase >
+  SQL Editor ejecuta (cambiando el correo):
+    update public.perfiles set rol = 'directora' where email = 'directora@colegio.edu.pe';
+- Proyectar: imágenes, videos, PDF y texto en la app. PowerPoint, Word
+  y Excel se proyectan con el visor de Microsoft (necesita internet;
+  hasta 10 MB). Si una presentación pesa más, guárdala como PDF.
+
+------------------------------------------------------------------
+4. LIMPIEZA SEMANAL
+------------------------------------------------------------------
+  Cada domingo a las 11 p. m. (hora de Perú) se borran solos todos los
+  archivos subidos por los docentes. Las cuentas no se tocan.
