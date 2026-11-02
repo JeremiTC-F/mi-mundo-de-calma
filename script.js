@@ -1,7 +1,7 @@
 'use strict';
 
 var EXT = ['webp', 'png', 'jpg', 'jpeg', 'gif'], GIF1 = ['gif', 'webp', 'png', 'jpg', 'jpeg'];
-var AM = [['Dinosaurio','🦖'],['Personaje','🦄'],['Niño','👦'],['Monito','🐵'],['Gatito','🐱'],['Estrella','⭐']];
+var AM = [['Dinosaurio','🦖'],['Unicornio','🦄'],['Niño','👦'],['Monito','🐵'],['Gatito','🐱'],['Estrella','⭐']];
 var EM = [
   ['😄','Feliz','#fde9c8','¡Qué bueno que estés feliz! Comparte esa alegría.','voz_feliz'],
   ['😌','Tranquilo','#e3f1d3','Qué bien. Respira y disfruta la calma.','voz_tranquilo'],
@@ -12,9 +12,9 @@ var EM = [
 ];
 var JG = [
   ['Infla el globo','Respira y presiona','🎈',1,'sfx_globo_inflar','Toca el globo despacito: crece con cada toque'],
-  ['Burbujas de calma','Toca y relájate','🫧',6,'sfx_burbuja','Revienta las 6 burbujas, una a una'],
-  ['Colores de calma','Pinta el arcoíris','🌈',7,'sfx_arcoiris_1','Pinta el arcoíris en orden: ¡empieza por el rojo!'],
-  ['Pececitos tranquilos','Explora y disfruta','🐠',5,'sfx_pez','Toca a cada pececito para hacerlo feliz'],
+  ['Burbujas de calma','Toca y relájate','🫧',10,'sfx_burbuja','Revienta las 10 burbujas, una a una'],
+  ['Colores de calma','Pinta el arcoíris','🌈',7,'sfx_arcoiris_1','Elige un color y toca una franja para pintarla'],
+  ['Pececitos tranquilos','Explora y disfruta','🐠',10,'sfx_pez','Toca a los 10 pececitos para hacerlos felices'],
   ['Atrapa las estrellas','Recoge las estrellas','⭐',7,'sfx_estrella','Atrapa las 7 estrellas para tu cielo'],
   ['Rompecabezas','Arma y relaja','🧩',9,'sfx_pieza','Toca una imagen y arma el rompecabezas']
 ];
@@ -47,50 +47,69 @@ var today = new Date().toDateString();
 S.acc = window.SUPABASE_URL ? 'cargando' : 'fuera';
 try { var ses = ld('t'); if (ses && !window.SUPABASE_URL) { S.t = { email: ses, rol: 'docente' }; S.acc = 'ok'; } } catch (e) {}
 
-var AUD = {};
-function stopVoz(){ for (var k in AUD) if (k.indexOf('voz_') === 0) { try { AUD[k].pause(); } catch (e) {} } }
+var AUD = {}, VOZ = null;
+function stopVoz(){
+  if (VOZ) { try { VOZ.stop(); } catch (e) {} VOZ = null; }
+  for (var k in AUD) if (k.indexOf('voz_') === 0) { try { AUD[k].pause(); } catch (e) {} }
+}
 var ACX = null, BUF = {};
-function acx(){ if (!ACX) { try { ACX = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } return ACX; }
+function acx(){
+  if (!ACX) {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    try { ACX = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+  }
+  return ACX;
+}
 function cargaBuf(n){
-  var c = acx(); if (!c || BUF[n] !== undefined) return; BUF[n] = null;
+  var c = acx(); if (!c || BUF[n]) return; BUF[n] = null;
   fetch('assets/audio/' + n + '.mp3').then(function(r){ if (!r.ok) throw 0; return r.arrayBuffer(); })
     .then(function(b){ return new Promise(function(ok, no){ c.decodeAudioData(b, ok, no); }); })
-    .then(function(d){ BUF[n] = d; }).catch(function(){ BUF[n] = 0; });
+    .then(function(d){ BUF[n] = d; }).catch(function(){ delete BUF[n]; });
 }
 var SFX = ['boton', 'amigo', 'globo_inflar', 'globo_volar', 'burbuja', 'arcoiris_1', 'arcoiris_2', 'arcoiris_3', 'arcoiris_4', 'arcoiris_5', 'arcoiris_6', 'arcoiris_7', 'arcoiris_fin', 'pez', 'estrella', 'pieza', 'rompe_ok', 'actividad', 'estrella_ganada', 'logro'].map(function(x){ return 'sfx_' + x; });
 var VOCES = ['listo', 'inhala', 'mantener', 'exhala', 'muybien', 'feliz', 'tranquilo', 'preocupado', 'triste', 'enojado', 'nervioso', 'gracias', 'nombre'].map(function(x){ return 'voz_' + x; });
 function desbloquear(){
   var c = acx(); if (!c) return;
-  try { if (c.state === 'suspended') c.resume(); } catch (e) {}
-  SFX.forEach(cargaBuf);
+  try { if (c.state !== 'running') c.resume(); } catch (e) {}
+  if (!S.bufs) { S.bufs = 1; VOCES.concat(SFX).forEach(cargaBuf); }
 }
-['pointerdown', 'keydown'].forEach(function(ev){ document.addEventListener(ev, function f(){ document.removeEventListener(ev, f, true); desbloquear(); }, true); });
+['pointerdown', 'keydown', 'touchend'].forEach(function(ev){ document.addEventListener(ev, desbloquear, true); });
 function precarga(){
   if (S.pre) return; S.pre = 1;
   var n9 = [1, 2, 3, 4, 5, 6, 7, 8, 9], I = [1, 2, 3, 4, 5, 6].map(function(i){ return ['assets/img/avatar' + i, GIF1]; })
     .concat(RESP.map(function(x){ return ['assets/img/' + x, GIF1]; }),
-      ['globo', 'fondo_agua'].concat(n9.map(function(i){ return 'rompecabezas' + i + '_m'; }), n9.map(function(i){ return 'rompecabezas' + i; })).map(function(x){ return ['assets/img/' + x, EXT]; }));
+      ['globo', 'fondo_agua', 'fondo_burbujas', 'fondo_estrellas'].concat(n9.map(function(i){ return 'rompecabezas' + i + '_m'; }), n9.map(function(i){ return 'rompecabezas' + i; })).map(function(x){ return ['assets/img/' + x, EXT]; }));
   var A = VOCES.concat(SFX).map(function(x){ return 'assets/audio/' + x + '.mp3'; }), i = 0, j = 0, au = 0;
   function sigI(){ if (i >= I.length) { if (!au) { au = 1; sigA(); } return; } var q = I[i++]; probe(q[0], q[1]).then(sigI); }
   function sigA(){ if (j >= A.length) return; fetch(A[j++]).then(function(r){ return r.blob(); }).catch(function(){}).then(function(){ setTimeout(sigA, 30); }); }
   sigI(); sigI(); sigI();
-  VOCES.forEach(function(n){ var a = AUD[n] || (AUD[n] = new Audio('assets/audio/' + n + '.mp3')); a.preload = 'auto'; });
 }
 function snd(n){
   var voz = n.indexOf('voz_') === 0;
   if (voz ? !S.set.voz : !S.set.son) return;
   if (voz) stopVoz();
-  else if (BUF[n] && ACX && ACX.state === 'running') {
+  var c = ACX;
+  if (BUF[n] && c) {
     try {
-      var src = ACX.createBufferSource(), g = ACX.createGain();
-      src.buffer = BUF[n]; g.gain.value = S.set.red ? 0.4 : 1; src.connect(g); g.connect(ACX.destination); src.start(0); return;
+      if (c.state !== 'running') c.resume();
+      var src = c.createBufferSource(), g = c.createGain();
+      src.buffer = BUF[n]; g.gain.value = (!voz && S.set.red) ? 0.4 : 1; src.connect(g); g.connect(c.destination); src.start(0);
+      if (voz) { VOZ = src; src.onended = function(){ if (VOZ === src) VOZ = null; }; }
+      return;
     } catch (e) {}
   }
+  if (c && BUF[n] === undefined) cargaBuf(n);
   var a = AUD[n] || (AUD[n] = new Audio('assets/audio/' + n + '.mp3'));
   a.volume = (!voz && S.set.red) ? 0.4 : 1;
   try { a.currentTime = 0; var p = a.play(); if (p && p.catch) p.catch(function(){}); } catch (e) {}
 }
+function sonando(){
+  if (VOZ) return true;
+  for (var k in AUD) if (k.indexOf('voz_') === 0 && !AUD[k].paused && !AUD[k].ended) return true;
+  return false;
+}
 function vdur(n){
+  if (BUF[n]) return Promise.resolve(BUF[n].duration);
   return new Promise(function(res){
     var a = AUD[n] || (AUD[n] = new Audio('assets/audio/' + n + '.mp3')), done = false;
     if (a.duration > 0 && isFinite(a.duration)) return res(a.duration);
@@ -327,8 +346,7 @@ async function breathe(){
     }
   }
   if (S.set.voz) {
-    var ea = AUD.voz_exhala;
-    for (var k = 0; ea && !ea.paused && !ea.ended && k < 20; k++) { await wait(100); if (!alive()) return; }
+    for (var k = 0; sonando() && k < 20; k++) { await wait(100); if (!alive()) return; }
   }
   cnt.resp++; savec(); star(); snd('voz_muybien'); pillUp();
   idle('¡Muy bien! Lo lograste<br>+1 ⭐'); btn.textContent = 'Respirar otra vez';
@@ -336,7 +354,7 @@ async function breathe(){
 
 function win(ar, msg){
   if (cnt.jue.indexOf(S.pj) < 0) cnt.jue.push(S.pj);
-  savec(); star(); ar.style.height = 'auto'; ar.classList.remove('noche'); ar.style.background = '';
+  savec(); star(); ar.style.height = 'auto'; ar.classList.remove('noche', 'burb'); ar.style.background = '';
   ar.innerHTML = '<div class="mascot" style="padding:40px 10px 14px;animation:pop .6s ease">🎉<br><b style="font-size:22px">' + (msg || '¡Muy bien!') + '</b><br><small>+1 ⭐</small></div>' +
     '<div style="padding:0 20px 20px;display:grid;gap:12px"><button class="btn big" style="position:static" data-j="' + S.pj + '">Jugar otra vez</button>' +
     '<button class="btn sec big" style="position:static" data-g="jue">Mis juegos</button></div>';
@@ -352,10 +370,12 @@ function arena(){
 }
 function burbujas(ar, g){
   var N = g[3], left = N, W = ar.clientWidth || 340, H = ar.clientHeight || 380, last = 0, bs = [];
+  ar.classList.add('burb'); ar.style.background = 'linear-gradient(#7dd3fc,#0ea5e9)';
+  ar.innerHTML = pic('assets/img/fondo_burbujas', '').replace('class="pic"', 'class="pic bg"');
   var k = !S.set.ani ? 0 : (S.set.red ? .5 : 1);
   cancelAnimationFrame(S.raf);
   for (var i = 0; i < N; i++) (function(){
-    var sz = 64 + Math.random() * 46, an = Math.random() * 6.283, sp = (130 - sz) * (.7 + Math.random() * .7);
+    var sz = 64 + Math.random() * 46, an = Math.random() * 6.283, sp = (130 - sz) * (.7 + Math.random() * .7) * 1.5;
     var el = document.createElement('button'); el.className = 'mv'; el.setAttribute('aria-label', 'Tocar');
     el.style.width = el.style.height = sz + 'px'; el.style.fontSize = (sz * .85) + 'px';
     el.innerHTML = '<span class="fi">' + g[2] + '</span>';
@@ -384,9 +404,13 @@ function burbujas(ar, g){
   }
   S.raf = requestAnimationFrame(frame);
 }
+var ESTRELLA = '<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><path d="M50 4 L62 36 L96 37 L69 58 L79 92 L50 72 L21 92 L31 58 L4 37 L38 36 Z" fill="#facc15" stroke="#eab308" stroke-width="4" stroke-linejoin="round"/>' +
+  '<ellipse cx="40" cy="50" rx="5" ry="7" fill="#1e293b"/><ellipse cx="60" cy="50" rx="5" ry="7" fill="#1e293b"/><circle cx="41.5" cy="47.5" r="1.8" fill="#fff"/><circle cx="61.5" cy="47.5" r="1.8" fill="#fff"/>' +
+  '<path d="M42 62 Q50 69 58 62" stroke="#1e293b" stroke-width="3.5" fill="none" stroke-linecap="round"/><circle cx="33" cy="61" r="4" fill="#fb923c" opacity=".6"/><circle cx="67" cy="61" r="4" fill="#fb923c" opacity=".6"/></svg>';
 function fugaces(ar, g){
   var N = g[3], caught = 0, W = ar.clientWidth || 340, H = ar.clientHeight || 380, last = 0, lastSp = 0, act = [];
   ar.classList.add('noche');
+  ar.innerHTML = pic('assets/img/fondo_estrellas', '').replace('class="pic"', 'class="pic bg"');
   var k = !S.set.ani ? 0 : (S.set.red ? .5 : 1);
   cancelAnimationFrame(S.raf);
   function atrapada(st){
@@ -400,14 +424,14 @@ function fugaces(ar, g){
     var sz = 70 + Math.random() * 20, st = { sz: sz, age: 0, done: 0 };
     var el = document.createElement('button'); el.className = 'mv star'; el.setAttribute('aria-label', 'Estrella');
     el.style.width = el.style.height = sz + 'px'; el.style.fontSize = (sz * .85) + 'px';
-    el.innerHTML = (quieta ? '' : '<span class="tail"></span>') + '<span class="fi">' + g[2] + '</span>';
+    el.innerHTML = (quieta ? '' : '<span class="tail"></span>') + '<span class="fi">' + ESTRELLA + '</span>';
     st.el = el; st.fi = el.querySelector('.fi'); st.tail = el.querySelector('.tail');
     if (quieta) { st.x = Math.random() * (W - sz); st.y = Math.random() * (H - sz); }
     else {
       var lado = Math.floor(Math.random() * 4), m = sz + 30, tx = W * (.2 + Math.random() * .6), ty = H * (.2 + Math.random() * .6);
       if (lado === 0) { st.x = -m; st.y = Math.random() * H; } else if (lado === 1) { st.x = W + m; st.y = Math.random() * H; }
       else if (lado === 2) { st.x = Math.random() * W; st.y = -m; } else { st.x = Math.random() * W; st.y = H + m; }
-      var dx = tx - st.x, dy = ty - st.y, d = Math.hypot(dx, dy) || 1, sp = (60 + Math.random() * 80) * k;
+      var dx = tx - st.x, dy = ty - st.y, d = Math.hypot(dx, dy) || 1, sp = (60 + Math.random() * 80) * 1.5 * k;
       st.vx = dx / d * sp; st.vy = dy / d * sp;
       st.tail.style.transform = 'rotate(' + (Math.atan2(st.vy, st.vx) * 57.3) + 'deg)';
     }
@@ -429,10 +453,13 @@ function fugaces(ar, g){
   }
   S.raf = requestAnimationFrame(frame);
 }
+var CARA = '<svg class="cara" viewBox="0 0 100 70" aria-hidden="true"><ellipse cx="30" cy="26" rx="8" ry="11" fill="#1e293b"/><ellipse cx="70" cy="26" rx="8" ry="11" fill="#1e293b"/>' +
+  '<circle cx="33" cy="21" r="3.2" fill="#fff"/><circle cx="73" cy="21" r="3.2" fill="#fff"/><circle cx="16" cy="46" r="7" fill="#fda4af" opacity=".75"/><circle cx="84" cy="46" r="7" fill="#fda4af" opacity=".75"/>' +
+  '<path d="M34 48 Q50 64 66 48" stroke="#1e293b" stroke-width="5" fill="none" stroke-linecap="round"/></svg>';
 function globo(ar){
   var c = 0, N = 6, tremble = null;
   ar.innerHTML = '<div id="gt" style="position:absolute;top:14px;left:0;right:0;text-align:center;font-weight:800;font-size:18px">Toca el globo despacito: 0 de ' + N + '</div>' +
-    '<button id="bl" aria-label="Inflar el globo"><span id="bi" style="display:block">' + pic('assets/img/globo', '🎈') + '</span></button>';
+    '<button id="bl" aria-label="Inflar el globo"><span id="bi" style="display:block;position:relative">' + pic('assets/img/globo', '🎈') + CARA + '</span></button>';
   var b = $('#bl'), bi = $('#bi');
   b.style.cssText = 'position:absolute;left:50%;bottom:20px;font-size:90px;transform:translateX(-50%) scale(1);transform-origin:50% 100%;transition:transform 1.2s cubic-bezier(.3,1.5,.5,1);';
   function fly(){
@@ -453,39 +480,37 @@ function globo(ar){
 
 var RB = [['rojo','#ef4444'],['naranja','#f97316'],['amarillo','#facc15'],['verde','#22c55e'],['azul','#3b82f6'],['añil','#6366f1'],['violeta','#a855f7']];
 function arcoiris(ar){
-  var cx = 150, cy = 168, R0 = 136, W = 17, step = 0, busy = 0, i;
+  var cx = 150, cy = 168, R0 = 136, W = 17, sel = 0, pint = [], busy = 0, i;
   function arc(k){ var r = R0 - k * W; return 'M ' + (cx - r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 0 1 ' + (cx + r) + ' ' + cy; }
   var svg = '<svg viewBox="0 0 300 185" class="rb" aria-hidden="true">' +
     '<g id="cielo" style="opacity:0;transition:opacity .9s"><circle cx="262" cy="34" r="20" fill="#fde047"/><ellipse cx="40" cy="170" rx="30" ry="12" fill="#fff"/><ellipse cx="62" cy="160" rx="22" ry="14" fill="#fff"/><ellipse cx="262" cy="172" rx="28" ry="11" fill="#fff"/></g>';
   for (i = 0; i < 7; i++) svg += '<path d="' + arc(i) + '" fill="none" stroke="#cbd5e1" stroke-opacity=".55" stroke-width="' + (W - 1) + '"/>' +
-    '<path id="rp' + i + '" class="rbp" d="' + arc(i) + '" fill="none" stroke="' + RB[i][1] + '" stroke-width="' + (W - 1) + '" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>' +
+    '<path id="rp' + i + '" class="rbp" d="' + arc(i) + '" fill="none" stroke="#cbd5e1" stroke-width="' + (W - 1) + '" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>' +
     '<path data-s="' + i + '" d="' + arc(i) + '" fill="none" stroke="transparent" stroke-width="' + (W + 2) + '" style="cursor:pointer"/>';
   svg += '</svg>';
   var dots = '';
-  for (i = 0; i < 7; i++) dots += '<button class="dot" data-s="' + i + '" style="background:' + RB[i][1] + '" aria-label="Color ' + RB[i][0] + '"></button>';
+  for (i = 0; i < 7; i++) dots += '<button class="dot" data-c="' + i + '" style="background:' + RB[i][1] + '" aria-label="Color ' + RB[i][0] + '"></button>';
   ar.style.height = 'auto';
   ar.innerHTML = '<div class="rbwrap"><div id="rbm" class="rbmsg" role="status"></div>' + svg + '<div class="dots">' + dots + '</div></div>';
   function msg(t){ $('#rbm').textContent = t; }
-  function mark(){ ar.querySelectorAll('.dot').forEach(function(d, k){ d.classList.toggle('done', k < step); d.classList.toggle('next', k === step); }); }
-  function pick(k){
+  function mark(){ ar.querySelectorAll('.dot').forEach(function(d, k){ d.classList.toggle('next', k === sel); }); }
+  function color(k){ if (busy) return; sel = k; snd('sfx_arcoiris_' + (k + 1)); mark(); msg('Color ' + RB[k][0] + ': toca una franja'); }
+  function pintar(k){
     if (busy) return;
-    if (k === step) {
-      $('#rp' + k).style.strokeDashoffset = 0; snd('sfx_arcoiris_' + (k + 1)); step++; mark();
-      if (step < 7) msg('¡Muy bien! Ahora el ' + RB[step][0]);
-      else {
-        busy = 1; msg('¡Tu arcoíris está completo!'); $('#cielo').style.opacity = 1;
-        setTimeout(function(){ snd('sfx_arcoiris_fin'); }, 500);
-        setTimeout(function(){ win(ar, '¡Qué bonito arcoíris!'); }, 2000);
-      }
-    } else {
-      msg('Busca el ' + RB[step][0] + ' ✨');
-      var d = ar.querySelectorAll('.dot')[step], p = $('#rp' + step);
-      d.classList.add('hint'); p.classList.add('hint');
-      setTimeout(function(){ d.classList.remove('hint'); p.classList.remove('hint'); }, 1400);
+    var p = $('#rp' + k), nuevo = pint.indexOf(k) < 0;
+    p.style.stroke = RB[sel][1]; p.style.strokeDashoffset = 0; snd('sfx_arcoiris_' + (sel + 1));
+    if (nuevo) pint.push(k);
+    var falta = 7 - pint.length;
+    if (falta) msg(falta === 1 ? '¡Muy bien! Falta 1 franja' : '¡Muy bien! Faltan ' + falta + ' franjas');
+    else {
+      busy = 1; msg('¡Tu arcoíris está completo!'); $('#cielo').style.opacity = 1;
+      setTimeout(function(){ snd('sfx_arcoiris_fin'); }, 500);
+      setTimeout(function(){ win(ar, '¡Qué bonito arcoíris!'); }, 2000);
     }
   }
-  ar.querySelectorAll('[data-s]').forEach(function(e){ e.onclick = function(){ pick(+e.dataset.s); }; });
-  msg('Toca el ' + RB[0][0] + ' para empezar'); mark();
+  ar.querySelectorAll('[data-c]').forEach(function(e){ e.onclick = function(){ color(+e.dataset.c); }; });
+  ar.querySelectorAll('[data-s]').forEach(function(e){ e.onclick = function(){ pintar(+e.dataset.s); }; });
+  msg('Elige un color y toca una franja'); mark();
 }
 
 var FE = '<circle cx="52" cy="15" r="4.5" fill="#fff"/><circle cx="53.4" cy="15" r="2.3" fill="#1e293b"/>';
@@ -502,10 +527,22 @@ var PECES = [
   '<path d="M24 20 Q6 0 2 6 Q8 20 2 34 Q6 40 24 20 Z" fill="#f472b6" opacity=".85"/><path d="M34 9 Q30 0 22 2 Q28 8 30 12 Z M34 31 Q30 40 22 38 Q28 32 30 28 Z" fill="#ec4899" opacity=".8"/>' +
     '<ellipse cx="40" cy="20" rx="18" ry="10" fill="#a855f7"/>' + FE + '<path d="M58 22 Q55 25 51 23" stroke="#3b0764" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
 ];
-var PNOM = ['Pez payaso', 'Pez globo', 'Pez ángel', 'Pez cirujano', 'Pez betta'];
+PECES.push(
+  '<path d="M21 20 Q6 3 1 9 Q8 20 1 31 Q6 37 21 20 Z" fill="#fb923c"/><ellipse cx="40" cy="21" rx="19" ry="13" fill="#f59e0b"/><path d="M33 9 Q40 0 48 9 Z" fill="#fb923c"/><path d="M38 30 Q42 38 46 31 Z" fill="#fb923c"/>' + FE +
+    '<path d="M58 24 Q55 27 51 25" stroke="#7c2d12" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
+  '<path d="M13 22 L1 13 L4 22 L1 31 Z" fill="#78716c"/><ellipse cx="36" cy="22" rx="25" ry="11" fill="#a8a29e"/><ellipse cx="38" cy="27" rx="18" ry="5" fill="#e7e5e4"/><path d="M30 12 L36 6 L40 12 Z" fill="#78716c"/>' +
+    '<circle cx="50" cy="18" r="3.4" fill="#fff"/><circle cx="51" cy="18" r="1.8" fill="#1e293b"/><path d="M58 24 Q62 30 63 36 M57 25 Q60 32 59 38 M58 22 Q63 22 64 26" stroke="#44403c" stroke-width="1.2" fill="none" stroke-linecap="round"/>',
+  '<path d="M15 20 L2 9 L5 20 L2 31 Z" fill="#f472b6"/><ellipse cx="36" cy="20" rx="23" ry="14" fill="#14b8a6"/><path d="M26 10 Q30 20 26 30 M34 8 Q38 20 34 32 M42 9 Q45 20 42 31" stroke="#0f766e" stroke-width="1.5" fill="none"/>' +
+    '<path d="M30 6 Q36 0 44 7 Z" fill="#f472b6"/><path d="M57 16 Q64 20 57 25 Z" fill="#fde68a"/>' + FE,
+  '<path d="M27 6 L31 0 L38 5 Z" fill="#64748b"/><path d="M27 34 L31 40 L38 35 Z" fill="#64748b"/><path d="M18 11 Q12 20 18 29 Z" fill="#64748b"/><circle cx="34" cy="20" r="17" fill="#94a3b8"/>' +
+    '<path d="M24 12 Q34 20 24 28" stroke="#cbd5e1" stroke-width="2" fill="none"/><circle cx="44" cy="15" r="4" fill="#fff"/><circle cx="45.2" cy="15" r="2.1" fill="#1e293b"/><circle cx="49" cy="22" r="1.6" fill="#475569"/>',
+  '<path d="M9 20 L1 10 L3 20 L1 30 Z" fill="#1e3a8a"/><path d="M6 20 Q18 9 40 11 Q50 13 52 20 Q50 27 40 29 Q18 31 6 20 Z" fill="#1d4ed8"/><path d="M12 22 Q26 28 46 24 Q30 27 12 22 Z" fill="#bfdbfe"/>' +
+    '<path d="M22 12 L28 3 L32 11 Z" fill="#1e3a8a"/><path d="M50 18.5 L63.5 20 L50 21.5 Z" fill="#334155"/><circle cx="44" cy="17" r="3.4" fill="#fff"/><circle cx="45" cy="17" r="1.8" fill="#1e293b"/>'
+);
+var PNOM = ['Pez payaso', 'Pez globo', 'Pez ángel', 'Pez cirujano', 'Pez betta', 'Pez dorado', 'Pez gato', 'Pez loro', 'Pez luna', 'Pez espada'];
 function fishSVG(i){ return '<svg viewBox="0 0 64 40" width="92" height="58" aria-hidden="true">' + PECES[i] + '</svg>'; }
 function peces(ar){
-  var N = 5, W = ar.clientWidth || 340, H = ar.clientHeight || 380, caught = 0, last = 0, fishes = [];
+  var N = PECES.length, W = ar.clientWidth || 340, H = ar.clientHeight || 380, caught = 0, last = 0, fishes = [];
   var k = !S.set.ani ? 0 : (S.set.red ? .5 : 1);
   ar.innerHTML = pic('assets/img/fondo_agua', '').replace('class="pic"', 'class="pic bg"') +
     '<div id="pc" class="pc">Pececitos felices: 0 de ' + N + '</div>';
@@ -525,6 +562,7 @@ function peces(ar){
     el.className = 'fish'; el.setAttribute('aria-label', PNOM[i]);
     el.innerHTML = '<span class="fi">' + fishSVG(i) + '</span>';
     var f = { el: el, fi: el.firstChild, x: Math.random() * (W - 96), y: 46 + Math.random() * (H - 130), sp: 38 + i * 14, dir: 1, ph: Math.random() * 6, done: 0 };
+    f.sp = 34 + (i % 5) * 12 + Math.random() * 10;
     target(f); fishes.push(f); ar.appendChild(el);
     el.style.transform = 'translate(' + f.x + 'px,' + f.y + 'px)';
     el.onclick = function(){
@@ -533,7 +571,7 @@ function peces(ar){
       if (f.done) return;
       f.done = 1; caught++; el.insertAdjacentHTML('beforeend', '<span class="hrt">💗</span>');
       $('#pc').textContent = 'Pececitos felices: ' + caught + ' de ' + N;
-      if (caught === N) { cancelAnimationFrame(S.raf); setTimeout(function(){ win(ar, '¡Los 5 pececitos están felices!'); }, 900); }
+      if (caught === N) { cancelAnimationFrame(S.raf); setTimeout(function(){ win(ar, '¡Los ' + N + ' pececitos están felices!'); }, 900); }
     };
   })(i);
   function frame(ts){

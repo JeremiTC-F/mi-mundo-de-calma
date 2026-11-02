@@ -22,7 +22,7 @@ mismo nombre, porque la app usa primero el .webp.
 AMIGOS (6). Pueden ser GIF animados: la app busca primero .gif y
 si no hay, usa .webp / .png / .jpg:
   avatar1.gif  Dinosaurio      avatar4.gif  Monito
-  avatar2.gif  Personaje       avatar5.gif  Gatito
+  avatar2.gif  Unicornio       avatar5.gif  Gatito
   avatar3.gif  Niño            avatar6.gif  Estrella
   Recomendado: cuadrados (512x512) con fondo transparente.
 
@@ -38,7 +38,10 @@ ROMPECABEZAS (9): rompecabezas1..9 y su miniatura rompecabezas1_m..9_m
   Fila 2: 4, 5, 6  ->  2x3 (6 piezas)
   Fila 3: 7, 8, 9  ->  3x3 (9 piezas)
 
-JUEGOS: globo.webp, fondo_agua.webp
+JUEGOS: globo.webp (la carita se dibuja sola encima)
+  fondo_agua.webp       peces
+  fondo_burbujas.webp   burbujas
+  fondo_estrellas.webp  atrapa las estrellas
 
 ------------------------------------------------------------------
 2. AUDIOS  ->  assets/audio/   (todos .mp3)

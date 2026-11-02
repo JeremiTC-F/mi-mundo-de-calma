@@ -67,7 +67,6 @@ main{flex:1;padding:0 16px 16px}
 .rbp.hint{animation:pulse .7s ease-in-out 2}
 .dots{display:flex;justify-content:center;gap:8px;margin-top:10px;flex-wrap:wrap}
 .arena .dot{position:static;width:38px;height:38px;border-radius:50%;border:3px solid #fff;padding:0;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.25)}
-.arena .dot.done{opacity:.35}
 .arena .dot.next{box-shadow:0 0 0 4px var(--blue)}
 .arena .dot.hint{animation:pulse .7s ease-in-out 2}
 @keyframes pulse{50%{transform:scale(1.25);filter:brightness(1.15)}}
@@ -268,3 +267,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .arena .star .fi{filter:drop-shadow(0 0 8px rgba(253,224,71,.9))}
 :root.hc .arena.noche{background:radial-gradient(circle at 70% 15%,#2c3e7a,#151f45 60%,#0b1230)}
 :root.hc .arena.noche{background:#000}
+.arena #bl .cara{position:absolute;left:51%;top:34%;width:40%;height:auto;transform:translate(-50%,-50%);pointer-events:none}
+.arena.burb .mv .fi{filter:drop-shadow(0 0 4px rgba(255,255,255,.9)) drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+.arena .star .fi{width:100%;height:100%}
+.arena .bg{pointer-events:none}
