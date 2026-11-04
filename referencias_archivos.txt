@@ -39,7 +39,7 @@ ROMPECABEZAS (9): rompecabezas1..9 y su miniatura rompecabezas1_m..9_m
   Fila 3: 7, 8, 9  ->  3x3 (9 piezas)
 
 JUEGOS: globo.webp (la carita se dibuja sola encima)
-  fondo_agua.webp       peces
+  fondo_peces.webp      peces
   fondo_burbujas.webp   burbujas
   fondo_estrellas.webp  atrapa las estrellas
 

@@ -78,7 +78,7 @@ function precarga(){
   if (S.pre) return; S.pre = 1;
   var n9 = [1, 2, 3, 4, 5, 6, 7, 8, 9], I = [1, 2, 3, 4, 5, 6].map(function(i){ return ['assets/img/avatar' + i, GIF1]; })
     .concat(RESP.map(function(x){ return ['assets/img/' + x, GIF1]; }),
-      ['globo', 'fondo_agua', 'fondo_burbujas', 'fondo_estrellas'].concat(n9.map(function(i){ return 'rompecabezas' + i + '_m'; }), n9.map(function(i){ return 'rompecabezas' + i; })).map(function(x){ return ['assets/img/' + x, EXT]; }));
+      ['globo', 'fondo_peces', 'fondo_burbujas', 'fondo_estrellas'].concat(n9.map(function(i){ return 'rompecabezas' + i + '_m'; }), n9.map(function(i){ return 'rompecabezas' + i; })).map(function(x){ return ['assets/img/' + x, EXT]; }));
   var A = VOCES.concat(SFX).map(function(x){ return 'assets/audio/' + x + '.mp3'; }), i = 0, j = 0, au = 0;
   function sigI(){ if (i >= I.length) { if (!au) { au = 1; sigA(); } return; } var q = I[i++]; probe(q[0], q[1]).then(sigI); }
   function sigA(){ if (j >= A.length) return; fetch(A[j++]).then(function(r){ return r.blob(); }).catch(function(){}).then(function(){ setTimeout(sigA, 30); }); }
@@ -219,6 +219,7 @@ function draw(){
   else {
     if (!S.al && SOLO.indexOf(s) < 0) s = S.scr = 'nombre';
     if (SOLO.indexOf(s) >= 0) h += scr(s);
+    else if (s === 'play') h += '<main class="juego"><button class="volver" id="volver" aria-label="Volver">←</button><div class="arena full" id="ar"></div></main>';
     else h += '<main>' + scr(s) + '</main><nav aria-label="Menú">' + NAV.map(function(n){
       return '<button data-g="' + n[0] + '"' + (s === n[0] ? ' class="on" aria-current="page"' : '') + '><span>' + n[1] + '</span>' + n[2] + '</button>';
     }).join('') + '</nav>';
@@ -252,8 +253,6 @@ function scr(s){
   if (s === 'jue') return head('Mis juegos', 'Juega, diviértete y relájate', 1) + '<div class="kgrid">' + JG.map(function(g, i){
     return '<button class="kb k' + (i % 6 + 1) + '" data-j="' + i + '"><i>' + JI[i] + '</i>' + g[0] + '</button>';
   }).join('') + '</div>';
-  if (s === 'play') { var g = JG[S.pj];
-    return head(g[0], g[5], 0).replace('<header>', '<header><button class="ib" data-g="jue" aria-label="Volver">←</button>') + '<div class="arena" id="ar"></div>'; }
   if (s === 'ami') { var sel = S.tmp === null ? S.am : S.tmp;
     return head('Elige tu amigo', '¿Con quién quieres compartir?', 1) + '<div class="friends">' + AM.map(function(a, i){
       return '<button data-a="' + i + '" aria-pressed="' + (sel === i) + '">' + avatar(i) + a[0] + '</button>';
@@ -354,10 +353,10 @@ async function breathe(){
 
 function win(ar, msg){
   if (cnt.jue.indexOf(S.pj) < 0) cnt.jue.push(S.pj);
-  savec(); star(); ar.style.height = 'auto'; ar.classList.remove('noche', 'burb'); ar.style.background = '';
-  ar.innerHTML = '<div class="mascot" style="padding:40px 10px 14px;animation:pop .6s ease">🎉<br><b style="font-size:22px">' + (msg || '¡Muy bien!') + '</b><br><small>+1 ⭐</small></div>' +
-    '<div style="padding:0 20px 20px;display:grid;gap:12px"><button class="btn big" style="position:static" data-j="' + S.pj + '">Jugar otra vez</button>' +
-    '<button class="btn sec big" style="position:static" data-g="jue">Mis juegos</button></div>';
+  savec(); star(); S.pzv = 0; ar.classList.remove('noche', 'burb'); ar.style.background = '';
+  ar.innerHTML = '<div class="cen"><div class="mascot" style="padding:40px 10px 14px;animation:pop .6s ease">🎉<br><b style="font-size:22px">' + (msg || '¡Muy bien!') + '</b><br><small>+1 ⭐</small></div>' +
+    '<div style="padding:0 20px 20px;display:grid;gap:12px;max-width:520px;margin:0 auto"><button class="btn big" style="position:static" data-j="' + S.pj + '">Jugar otra vez</button>' +
+    '<button class="btn sec big" style="position:static" data-g="jue">Mis juegos</button></div></div>';
 }
 function arena(){
   var g = JG[S.pj], ar = $('#ar');
@@ -490,8 +489,7 @@ function arcoiris(ar){
   svg += '</svg>';
   var dots = '';
   for (i = 0; i < 7; i++) dots += '<button class="dot" data-c="' + i + '" style="background:' + RB[i][1] + '" aria-label="Color ' + RB[i][0] + '"></button>';
-  ar.style.height = 'auto';
-  ar.innerHTML = '<div class="rbwrap"><div id="rbm" class="rbmsg" role="status"></div>' + svg + '<div class="dots">' + dots + '</div></div>';
+  ar.innerHTML = '<div class="rbwrap cen"><div id="rbm" class="rbmsg" role="status"></div>' + svg + '<div class="dots">' + dots + '</div></div>';
   function msg(t){ $('#rbm').textContent = t; }
   function mark(){ ar.querySelectorAll('.dot').forEach(function(d, k){ d.classList.toggle('next', k === sel); }); }
   function color(k){ if (busy) return; sel = k; snd('sfx_arcoiris_' + (k + 1)); mark(); msg('Color ' + RB[k][0] + ': toca una franja'); }
@@ -544,7 +542,7 @@ function fishSVG(i){ return '<svg viewBox="0 0 64 40" width="92" height="58" ari
 function peces(ar){
   var N = PECES.length, W = ar.clientWidth || 340, H = ar.clientHeight || 380, caught = 0, last = 0, fishes = [];
   var k = !S.set.ani ? 0 : (S.set.red ? .5 : 1);
-  ar.innerHTML = pic('assets/img/fondo_agua', '').replace('class="pic"', 'class="pic bg"') +
+  ar.innerHTML = pic('assets/img/fondo_peces', '').replace('class="pic"', 'class="pic bg"') +
     '<div id="pc" class="pc">Pececitos felices: 0 de ' + N + '</div>';
   ar.style.background = 'linear-gradient(#7dd3fc,#0369a1)';
   function target(f){ f.tx = Math.random() * (W - 96); f.ty = 46 + Math.random() * (H - 130); }
@@ -592,14 +590,14 @@ function peces(ar){
 }
 
 function pzGallery(ar){
-  ar.style.height = 'auto';
-  var h = '<div class="pzhd">Elige una imagen</div>';
+  S.pzv = 0;
+  var h = '<div class="cen"><div class="pzhd">Elige una imagen</div>';
   [['4 piezas', 0], ['6 piezas', 3], ['9 piezas', 6]].forEach(function(f){
     h += '<div class="pzrow"><span class="pzlab">' + f[0] + '</span><div class="pzgal">';
     for (var i = f[1] + 1; i <= f[1] + 3; i++) h += '<button data-pz="' + i + '" aria-label="Rompecabezas ' + i + ', ' + f[0] + '">' + pic('assets/img/rompecabezas' + i + '_m', '🧩') + '</button>';
     h += '</div></div>';
   });
-  ar.innerHTML = h;
+  ar.innerHTML = h + '</div>';
   ar.querySelectorAll('[data-pz]').forEach(function(b){ b.onclick = function(){ snd('sfx_boton'); pzLoad(ar, +b.dataset.pz); }; });
 }
 function pzLoad(ar, num){
@@ -639,13 +637,10 @@ function pzPath(pw, ph, M, T, e){
 }
 function pzPlay(ar, num, R, C, src, im){
   if (!im) { im = new Image(); im.onload = function(){ pzPlay(ar, num, R, C, src, im); }; im.src = src; return; }
-  ar.style.height = 'auto';
-  ar.innerHTML = '<div class="pzwrap"><div class="pzb" id="pzb"></div>' +
-    '<p class="pzmsg">Arrastra cada pieza a su lugar · <span id="pzc">0</span> de ' + (R * C) + '</p>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button class="btn sec" style="position:static;font-size:16px" id="pzv">🧩 Otras imágenes</button>' +
-    '<button class="btn sec" style="position:static;font-size:16px" id="mo">👁️ Ver modelo</button></div></div>';
-  var land = innerHeight < 500 && innerWidth > innerHeight;
-  var bd = $('#pzb'), W = bd.clientWidth, H = land ? Math.max(230, innerHeight - 150) : Math.max(400, Math.min(innerHeight - 250, 720)), a = im.naturalWidth / im.naturalHeight;
+  S.pzv = 1;
+  ar.innerHTML = '<div class="pzwrap cen"><div class="pzb" id="pzb"></div>' +
+    '<p class="pzmsg">Arrastra cada pieza a su lugar · <span id="pzc">0</span> de ' + (R * C) + '</p></div>';
+  var bd = $('#pzb'), W = bd.clientWidth, H = Math.max(240, ar.clientHeight - 76), land = W > H * 1.3, a = im.naturalWidth / im.naturalHeight;
   bd.style.height = H + 'px';
   var fH = land ? Math.min(H - 24, (W * .5 - 24) / a) : Math.min(H * .5, (W - 24) / a), fW = fH * a, fx = land ? 12 : (W - fW) / 2, fy = 12;
   var pw = fW / C, ph = fH / R, T = Math.min(pw, ph), M = Math.ceil(T * .3) + 3, cw = pw + 2 * M, ch = ph + 2 * M;
@@ -699,8 +694,6 @@ function pzPlay(ar, num, R, C, src, im){
     }
   }
   bd.addEventListener('pointerup', drop); bd.addEventListener('pointercancel', drop);
-  $('#mo').onclick = function(){ bd.classList.add('peek'); setTimeout(function(){ bd.classList.remove('peek'); }, 2500); };
-  $('#pzv').onclick = function(){ snd('sfx_boton'); pzGallery(ar); };
 }
 
 var SB_URL = String(window.SUPABASE_URL || '').replace(/\/+$/, ''), SB_KEY = window.SUPABASE_KEY || '';
@@ -910,7 +903,7 @@ function login(){
     (NUBE && !reg ? '<button type="button" class="lnk" id="forgot">¿Olvidaste tu contraseña?</button>' : '') +
     '<div id="lerr" class="' + (S.lmsg ? 'lok' : 'lerr') + '" role="alert">' + esc(S.lmsg || '') + '</div>' +
     '<button class="btn" type="submit" id="lsub">' + (reg ? 'Crear cuenta' : 'Entrar') + '</button></form>' +
-    '<p class="sub">' + (NUBE ? 'Inicia sesión una vez en esta tablet; la sesión queda abierta.' : 'Las cuentas se guardan en este dispositivo.') + '</p></main>';
+    (NUBE ? '' : '<p class="sub">Las cuentas se guardan en este dispositivo.</p>') + '</main>';
 }
 function gate(){
   if (S.scr === 'nueva') return nuevaClave();
@@ -1206,7 +1199,7 @@ async function dl(f){
 }
 
 document.addEventListener('click', function(e){
-  var t = e.target.closest('[data-g],[data-j],[data-a],[data-e],[data-k],[data-fin],[data-m],[data-p],[data-d],[data-dl],[data-lm],[data-voz],#showpw,#forgot,#tbtn,#chk,[data-pin],[data-rp],[data-rps],[data-rpc],#elegir,#save,#cnom,#nsel,#grok');
+  var t = e.target.closest('[data-g],[data-j],[data-a],[data-e],[data-k],[data-fin],[data-m],[data-p],[data-d],[data-dl],[data-lm],[data-voz],#showpw,#forgot,#tbtn,#chk,[data-pin],[data-rp],[data-rps],[data-rpc],#elegir,#save,#cnom,#nsel,#grok,#volver');
   if (!t) return;
   var D = t.dataset;
   if (t.id === 'tbtn') return abrirDocente();
@@ -1216,6 +1209,7 @@ document.addEventListener('click', function(e){
   if (D.rpc) { S.rp = ''; S.rpe = ''; return draw(); }
   if (D.rps) return restablecer(D.rps);
   if (t.id === 'cnom') { snd('sfx_boton'); return irNombre(); }
+  if (t.id === 'volver') { snd('sfx_boton'); if (S.pj === 5 && S.pzv) return pzGallery($('#ar')); return go('jue'); }
   if (t.id === 'nsel') return nuevoAl();
   if (t.id === 'grok') return finGracias();
   if (D.voz) return snd(D.voz);
