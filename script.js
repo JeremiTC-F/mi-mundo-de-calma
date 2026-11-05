@@ -172,7 +172,7 @@ function go(s){
 
 function uidt(){ return (S.t && (S.t.id || S.t.email)) || ''; }
 function alInit(){
-  var a = null; try { a = JSON.parse(ld('nino') || 'null'); } catch (x) {}
+  var a = null; try { localStorage.removeItem('mmc_nino'); a = JSON.parse(ld(ninoKey()) || 'null'); } catch (x) {}
   S.alst = 'ok';
   if (a && a.nombre) usarAl(a); else { S.al = null; S.scr = 'nombre'; S.tmp = null; S.anm = ''; }
   draw();
@@ -184,10 +184,11 @@ function usarAl(a){
   if (cnt.days.indexOf(today) < 0) cnt.days.push(today);
   alSync(); S.scr = 'home'; S.em = null; S.tmp = null;
 }
-function alSync(){ if (S.al) sv('nino', JSON.stringify(S.al)); }
+function ninoKey(){ return 'nino_' + uidt(); }
+function alSync(){ if (S.al && uidt()) sv(ninoKey(), JSON.stringify(S.al)); }
 function irNombre(){ S.tmp = S.al ? S.al.avatar : null; S.anm = S.al ? S.al.nombre : ''; go('nombre'); snd('voz_nombre'); }
 function otroNino(){
-  try { localStorage.removeItem('mmc_nino'); } catch (x) {}
+  try { localStorage.removeItem('mmc_' + ninoKey()); } catch (x) {}
   S.al = null; cnt = ncnt(); S.stars = 0; S.am = 0; S.mode = 'nino'; S.tmp = null; S.anm = ''; S.scr = 'nombre'; draw(); snd('voz_nombre');
 }
 function nuevoAl(){
@@ -1237,6 +1238,7 @@ document.addEventListener('click', function(e){
   else if (D.m) {
     if (D.m === 'out') {
       if (NUBE) sbCargar().then(function(sb){ return sb.auth.signOut(); }).catch(function(){});
+      try { localStorage.removeItem('mmc_' + ninoKey()); } catch (x) {}
       S.t = null; S.files = []; S.sol = []; S.rp = ''; S.rpok = null; S.mode = 'nino'; S.scr = 'home'; S.acc = 'fuera';
       S.al = null; S.alst = ''; cnt = ncnt(); S.stars = 0;
       try { localStorage.removeItem('mmc_t'); } catch (x) {}
