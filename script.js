@@ -246,7 +246,7 @@ function scr(s){
     '<button class="btn big" id="nsel">Seleccionar este personaje</button></main>';
   if (s === 'gracias') return '<main class="grw"><div class="grav">' + mascot() + '</div><h1 class="hola" style="text-align:center">¡Gracias por elegirme!</h1>' +
     '<p class="sub" style="font-size:18px">Ahora soy tu amigo, ' + esc(S.al ? S.al.nombre : '') + ' 💙</p><button class="btn big" id="grok" style="max-width:360px">¡Vamos!</button></main>';
-  if (s === 'resp') return head('Respira conmigo', '', 1) + '<div class="bwrap"><div class="breathe" id="br">' + mascot() + '</div>' +
+  if (s === 'resp') return head('Respira conmigo', '', 1) + '<div class="bwrap"><div class="breathe" id="br" data-k="am">' + mascot() + '</div>' +
     '<span class="bb b0 on" id="b0" role="status" aria-live="polite">Cuando estés listo, toca el botón</span>' +
     '<span class="bb b1" id="b1"></span><span class="bb b2" id="b2"></span><span class="bb b3" id="b3"></span></div>' +
     '<p class="sub" style="margin-top:12px">Estoy aquí contigo 💙</p><button class="btn big" id="bgo">Empezar a respirar</button>';
@@ -319,7 +319,13 @@ async function breathe(){
   var B = { ready: $('#b0'), inhale: $('#b1'), hold: $('#b2'), exhale: $('#b3') };
   function only(k){ for (var q in B) B[q].classList.toggle('on', q === k); }
   function phase(k){ if (k) br.dataset.phase = k; else delete br.dataset.phase; }
-  function idle(msg){ B.ready.innerHTML = msg; only('ready'); phase(null); br.innerHTML = mascot(); btn.textContent = 'Empezar a respirar'; btn.classList.remove('sec'); btn.onclick = breathe; }
+  function pon(g){
+    var k = g || 'am';
+    if (br.dataset.k === k) return;
+    br.innerHTML = g ? '<img class="pic rg" alt="" src="' + g + '?v=' + Date.now() + '">' : mascot();
+    br.dataset.k = k; void br.firstChild.offsetWidth;
+  }
+  function idle(msg){ B.ready.innerHTML = msg; only('ready'); pon(''); phase(null); btn.textContent = 'Empezar a respirar'; btn.classList.remove('sec'); btn.onclick = breathe; }
   btn.textContent = 'Parar'; btn.classList.add('sec');
   btn.onclick = function(){ S.rid++; stopVoz(); idle('Cuando estés listo, toca el botón'); };
   B.ready.textContent = '¿Listo? Empezamos'; only('ready'); snd('voz_listo');
@@ -336,7 +342,7 @@ async function breathe(){
   br.style.setProperty('--ph', secs + 's');
   for (var i = 0; i < PHASES.length; i++) {
     var p = PHASES[i], el = B[p.key];
-    br.innerHTML = G[i] ? '<img class="pic rg" alt="" src="' + G[i] + '?v=' + Date.now() + '">' : mascot();
+    pon(G[i]);
     el.innerHTML = '<b>' + p.label + '</b><em>' + p.text + '</em><span class="cn">' + secs + '</span>';
     only(p.key); phase(p.key); snd(p.voice);
     for (var n = secs; n > 0; n--) {

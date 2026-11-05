@@ -1,4 +1,4 @@
-var VERSION = 'mmc-v8';
+var VERSION = 'mmc-v9';
 var NUCLEO = ['./', 'index.html', 'styles.css', 'script.js', 'supabase-config.js'];
 
 self.addEventListener('install', function(e){
